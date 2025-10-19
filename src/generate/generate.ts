@@ -6,9 +6,11 @@ import type { ProspectorInput, ResearchBundle, FileManifest } from '../types.js'
 
 async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 	let lastAssistantText = ''
+	let turnCount = 0
 
 	for await (const message of execute({ prompt, options })) {
 		if (message.type === 'assistant') {
+			turnCount++
 			const textBlocks = message.message.content
 				.filter((c: any) => c.type === 'text')
 				.map((c: any) => c.text)
@@ -17,6 +19,10 @@ async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 
 			if (textBlocks) {
 				lastAssistantText = textBlocks
+				// Show progress indicator every few turns
+				if (turnCount % 3 === 0) {
+					console.log(`   ⏳ Generating files... (turn ${turnCount})`)
+				}
 			}
 		}
 

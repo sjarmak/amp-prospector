@@ -110,7 +110,9 @@ export async function synthesize(
 	input: ProspectorInput,
 	research: ResearchBundle
 ): Promise<FileManifest> {
+	console.log(`   📊 Research bundle size: ${JSON.stringify(research).length} chars`)
 	const prompt = `${SYSTEM_PROSPECTOR}\n\n${generationPrompt(input, research)}`
+	console.log(`   📝 Total prompt size: ${prompt.length} chars`)
 
 	const options: AmpOptions = {
 		dangerouslyAllowAll: true,
@@ -118,6 +120,7 @@ export async function synthesize(
 		logLevel: process.env.DEBUG ? 'debug' : 'info',
 	}
 
+	console.log('   ⏳ Waiting for AI to generate all 8 files (this may take 3-5 minutes)...')
 	const result = await getResult(prompt, options)
 	const jsonStr = extractJSON(result)
 

@@ -10,15 +10,13 @@ async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 
 	const startTime = Date.now()
 	let lastLogTime = startTime
+	let messageCount = 0
 	
 	for await (const message of execute({ prompt, options })) {
+		messageCount++
 		const elapsed = Math.round((Date.now() - startTime) / 1000)
-		const sinceLastLog = Math.round((Date.now() - lastLogTime) / 1000)
 		
-		if (sinceLastLog > 30) {
-			console.log(`   ⏳ Still waiting... (${elapsed}s elapsed)`)
-			lastLogTime = Date.now()
-		}
+		console.log(`   📨 Message #${messageCount} (${elapsed}s): ${message.type}`)
 		
 		if (message.type === 'assistant') {
 			turnCount++

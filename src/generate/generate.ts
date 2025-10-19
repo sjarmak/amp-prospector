@@ -1,8 +1,9 @@
 import { execute } from '@sourcegraph/amp-sdk'
 import type { AmpOptions } from '@sourcegraph/amp-sdk'
-import { generationPrompt } from '../prompts/generationPrompt.js'
+import { batchGenerationPrompt } from '../prompts/batchGenerationPrompt.js'
 import { SYSTEM_PROSPECTOR } from '../prompts/systemProspector.js'
-import type { ProspectorInput, ResearchBundle, FileManifest } from '../types.js'
+import type { ProspectorInput, ResearchBundle, FileManifest, GeneratedFile } from '../types.js'
+import { slugify } from '../writeFiles.js'
 
 async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 	let lastAssistantText = ''
@@ -72,6 +73,14 @@ const REQUIRED_FILES = [
 	'08_custom_demo.md',
 ]
 
+// Generate in smaller batches for reliability
+const FILE_BATCHES = [
+	['01_account_brief.md', '02_org_and_contacts.md'],
+	['03_tech_stack.md', '04_initiatives_and_triggers.md'],
+	['05_competition_and_landscape.md', '06_call_plan_and_talk_track.md'],
+	['07_discovery_framework.md', '08_custom_demo.md'],
+]
+
 function validateFileManifest(manifest: any): void {
 	if (!manifest || typeof manifest !== 'object') {
 		throw new Error('File manifest must be an object')
@@ -120,8 +129,7 @@ export async function synthesize(
 	research: ResearchBundle
 ): Promise<FileManifest> {
 	console.log(`   📊 Research bundle size: ${JSON.stringify(research).length} chars`)
-	const prompt = `${SYSTEM_PROSPECTOR}\n\n${generationPrompt(input, research)}`
-	console.log(`   📝 Total prompt size: ${prompt.length} chars`)
+	console.log('   📝 Generating files in batches for reliability...')
 
 	const options: AmpOptions = {
 		dangerouslyAllowAll: true,
@@ -129,26 +137,53 @@ export async function synthesize(
 		logLevel: process.env.DEBUG ? 'debug' : 'info',
 	}
 
-	console.log('   ⏳ Waiting for AI to generate all 8 files (this may take 3-5 minutes)...')
-	
-	// Add timeout after 10 minutes
-	const timeoutPromise = new Promise<string>((_, reject) => {
-		setTimeout(() => reject(new Error('Generation timed out after 10 minutes')), 10 * 60 * 1000)
-	})
-	
-	const result = await Promise.race([
-		getResult(prompt, options),
-		timeoutPromise
-	])
-	const jsonStr = extractJSON(result)
+	const allFiles: GeneratedFile[] = []
 
-	try {
-		const parsed = JSON.parse(jsonStr)
-		validateFileManifest(parsed)
-		return parsed as FileManifest
-	} catch (error) {
-		throw new Error(
-			`Failed to parse file manifest: ${error instanceof Error ? error.message : String(error)}. Raw result: ${result.slice(0, 500)}`
-		)
+	// Generate files in batches
+	for (let i = 0; i < FILE_BATCHES.length; i++) {
+		const batch = FILE_BATCHES[i]
+		console.log(`\n   📦 Batch ${i + 1}/${FILE_BATCHES.length}: ${batch.join(', ')}`)
+		
+		const prompt = `${SYSTEM_PROSPECTOR}\n\n${batchGenerationPrompt(input, research, batch)}`
+		
+		const timeoutPromise = new Promise<string>((_, reject) => {
+			setTimeout(() => reject(new Error(`Batch ${i + 1} timed out after 5 minutes`)), 5 * 60 * 1000)
+		})
+		
+		const result = await Promise.race([
+			getResult(prompt, options),
+			timeoutPromise
+		])
+		
+		const jsonStr = extractJSON(result)
+		
+		try {
+			const parsed = JSON.parse(jsonStr)
+			if (!parsed.files || !Array.isArray(parsed.files)) {
+				throw new Error('Response missing "files" array')
+			}
+			
+			// Validate we got the expected files for this batch
+			for (const expectedFile of batch) {
+				if (!parsed.files.some((f: GeneratedFile) => f.path === expectedFile)) {
+					throw new Error(`Missing expected file: ${expectedFile}`)
+				}
+			}
+			
+			allFiles.push(...parsed.files)
+			console.log(`   ✓ Generated ${parsed.files.length} files`)
+		} catch (error) {
+			throw new Error(
+				`Failed to parse batch ${i + 1}: ${error instanceof Error ? error.message : String(error)}`
+			)
+		}
 	}
+
+	const manifest: FileManifest = {
+		companySlug: slugify(input.company),
+		files: allFiles,
+	}
+
+	validateFileManifest(manifest)
+	return manifest
 }

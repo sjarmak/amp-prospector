@@ -28,9 +28,14 @@ async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 			const toolUses = message.message.content.filter((c: any) => c.type === 'tool_use')
 			for (const tool of toolUses) {
 				if (tool.type === 'tool_use' && tool.name === 'web_search') {
-					console.log(`   🔍 Searching: ${(tool.input as any).query || ''}`)
+					const query = typeof tool.input === 'object' && tool.input !== null
+						? (tool.input as Record<string, unknown>).objective || (tool.input as Record<string, unknown>).query || ''
+						: ''
+					console.log(`   🔍 Searching: ${query}`)
 				} else if (tool.type === 'tool_use' && tool.name === 'read_web_page') {
-					const url = (tool.input as any).url || ''
+					const url = typeof tool.input === 'object' && tool.input !== null
+						? String((tool.input as Record<string, unknown>).url || '')
+						: ''
 					const domain = url.match(/https?:\/\/([^/]+)/)?.[1] || url
 					console.log(`   📖 Reading: ${domain}`)
 				}

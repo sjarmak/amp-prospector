@@ -130,7 +130,16 @@ export async function synthesize(
 	}
 
 	console.log('   ⏳ Waiting for AI to generate all 8 files (this may take 3-5 minutes)...')
-	const result = await getResult(prompt, options)
+	
+	// Add timeout after 10 minutes
+	const timeoutPromise = new Promise<string>((_, reject) => {
+		setTimeout(() => reject(new Error('Generation timed out after 10 minutes')), 10 * 60 * 1000)
+	})
+	
+	const result = await Promise.race([
+		getResult(prompt, options),
+		timeoutPromise
+	])
 	const jsonStr = extractJSON(result)
 
 	try {

@@ -9,6 +9,8 @@ async function getResult(prompt: string, options: AmpOptions): Promise<string> {
 	let turnCount = 0
 
 	for await (const message of execute({ prompt, options })) {
+		console.log(`   🔧 Debug: Received message type: ${message.type}`)
+		
 		if (message.type === 'assistant') {
 			turnCount++
 			const textBlocks = message.message.content

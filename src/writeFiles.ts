@@ -22,8 +22,8 @@ function validateYAMLFrontmatter(content: string, filePath: string): void {
 }
 
 export async function writeFiles(manifest: FileManifest, outDir?: string): Promise<string> {
-	if (manifest.files.length !== 8) {
-		throw new Error(`Expected exactly 8 files, got ${manifest.files.length}`)
+	if (manifest.files.length !== 9) {
+		throw new Error(`Expected exactly 9 files, got ${manifest.files.length}`)
 	}
 
 	const outputDirectory = outDir || join('discovery', manifest.companySlug)

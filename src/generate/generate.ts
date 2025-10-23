@@ -71,6 +71,7 @@ const REQUIRED_FILES = [
 	'06_call_plan_and_talk_track.md',
 	'07_discovery_framework.md',
 	'08_custom_demo.md',
+	'09_technical_questionnaire.md',
 ]
 
 // Generate in smaller batches for reliability
@@ -79,6 +80,7 @@ const FILE_BATCHES = [
 	['03_tech_stack.md', '04_initiatives_and_triggers.md'],
 	['05_competition_and_landscape.md', '06_call_plan_and_talk_track.md'],
 	['07_discovery_framework.md', '08_custom_demo.md'],
+	['09_technical_questionnaire.md'],
 ]
 
 function validateFileManifest(manifest: any): void {
@@ -98,10 +100,10 @@ function validateFileManifest(manifest: any): void {
 
 	const files = m.files
 
-	if (files.length !== 8) {
+	if (files.length !== 9) {
 		const missing = REQUIRED_FILES.filter((f) => !files.some((file) => file.path.endsWith(f)))
 		throw new Error(
-			`Expected exactly 8 files, got ${files.length}. Missing: ${missing.join(', ')}`
+			`Expected exactly 9 files, got ${files.length}. Missing: ${missing.join(', ')}`
 		)
 	}
 

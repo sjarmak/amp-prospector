@@ -14,6 +14,7 @@ export function batchGenerationPrompt(
 		'06_call_plan_and_talk_track.md': 'Discovery questions and demo storyline',
 		'07_discovery_framework.md': 'Structured conversation framework (Demographics → Culture → Wrap-up)',
 		'08_custom_demo.md': 'Tailored Amp demo with prospect-specific use cases, capability mapping, steps, inputs, success metrics, and risk mitigations',
+		'09_technical_questionnaire.md': 'Concise, high-impact technical discovery questionnaire tailored to the company. Use the company\'s own language and org structure where possible. Limit to 3 high-level sections (e.g., Team & Environment, Codebase & Development Workflow, AI & Evaluation Criteria), each with 2-3 sharp, relevant questions. Keep the tone consultative, not interrogative. Prioritize revealing: current pain, team structure, code complexity, evaluation criteria, and AI-readiness. Purpose: Enable the sales engineer to run an efficient first call that uncovers what a tailored demo must show and what criteria must be met for the prospect to move into a trial phase.',
 	}
 
 	const fileList = fileNames.map(name => `- **${name}**: ${fileDescriptions[name]}`).join('\n')
